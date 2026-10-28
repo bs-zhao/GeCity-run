@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>German Cities — Information Search</title>
+<script src="https://www.naodao.com/public/experiment/libs/jspsych-7/jspsych.js"></script>
+<link rel="stylesheet" href="https://www.naodao.com/public/experiment/libs/jspsych-7/css/jspsych.css">
+<script src="https://www.naodao.com/public/experiment/libs/plugin/plugin-fullscreen.js"></script>
+<script src="https://www.naodao.com/public/experiment/libs/plugin/plugin-html-keyboard-response.js"></script>
+<script src="https://www.naodao.com/public/experiment/libs/plugin/plugin-instructions.js"></script>
+<script src="./data/experiment_data.js"></script>
+<script src="./trialset_loader.js"></script>
+<script src="./layout_config.js"></script>
+<script src="./plugin/click_rec.js"></script>
+<script src="./plugin/city_search.js"></script>
+<script src="./plugin/city_feedback.js"></script>
+<style>body{font-family:Arial,sans-serif} .gc-intro{max-width:780px;margin:auto;text-align:left;line-height:1.65;font-size:17px}.gc-intro h2{text-align:center}.gc-intro table{border-collapse:collapse;margin:16px auto}.gc-intro th,.gc-intro td{border:1px solid #bbb;padding:8px 15px}.gc-intro th{background:#eee}</style>
+</head>
+<body>
+<script>
+"use strict";
+
+// ================== EXPERIMENT CONDITIONS (EDIT HERE) ==================
+// Independent options: all four combinations are supported.
+// true: show the fixed D/V table before each trial (Space to continue).
+// false: skip the D/V table.
+const SHOW_DV_BEFORE_TRIAL = true;
+
+// true: show the correct city and all cue values (Space to continue).
+// false: briefly show "You chose City A/B" (600 ms), without correctness.
+const SHOW_CORRECT_FEEDBACK = false;
+// =======================================================================
+
+// Derive descriptive metadata labels; experimental settings are booleans above.
+const FEEDBACK_MODE = SHOW_CORRECT_FEEDBACK ? "correct" : "choice";
+const CONDITION = (SHOW_DV_BEFORE_TRIAL ? "dv_" : "no_dv_") + FEEDBACK_MODE;
+// Optional URL parameters: participant, seed; debug=1 enables shorter practice/trials.
+const params = new URLSearchParams(location.search);
+const DEBUG = params.get("debug")==="1";
+const N_PRACTICE = DEBUG ? Math.max(0,Math.min(5,Number(params.get("practice") ?? 5)||0)) : 5;
+let N_TRIALS = 0;
+const PARTICIPANT_ID = params.get("participant") || params.get("PROLIFIC_PID") || "anonymous";
+const SESSION_ID = "gc-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,10);
+const SEED = params.has("seed") && Number.isFinite(Number(params.get("seed"))) ? (Number(params.get("seed"))>>>0) : ((Math.random()*4294967296)>>>0);
+const CHOICE_KEYS = ["a","d","ArrowLeft","ArrowRight"];
+const jsPsych = initJsPsych({on_finish: completeExperiment});
+let randomState = SEED;
+function rand(){randomState=(randomState+0x6D2B79F5)>>>0;let t=randomState;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;}
+function shuffle(arr){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+// These values are initialized from the preloaded ./data/experiment_data.js.
+// Two independent orders: fixed monotonic D/V statistics, randomized-once choice display.
+let statisticsFeatures,orderedFeatures,featureIndices,POSITION_FEATURE_MAP,MAIN_TRIALS,PRACTICE_TRIALS,TRIALSET_SOURCE;
+function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function getFeatureVector(values){return featureIndices.map(i=>values[i]);}
+function cueTable(){return '<table><thead><tr><th>Feature</th><th>Discrimination</th><th>Validity</th></tr></thead><tbody>'+statisticsFeatures.map(f=>'<tr><td>'+escapeHTML(f.label)+'</td><td>'+(f.target_discrimination*100).toFixed(0)+'%</td><td>'+(f.target_validity*100).toFixed(0)+'%</td></tr>').join("")+'</tbody></table>';}
+function trialDvHtml(){return '<div class="gc-intro">'+cueTable()+'</div>';}
+function keyCity(key){return key==="a"||key==="ArrowLeft"?"A":"B";}
+let metadata;
+function intro(stimulus){return {type:jsPsychHtmlKeyboardResponse,stimulus:'<div class="gc-intro">'+stimulus+'<p style="text-align:center">Press <b>Space</b> to continue.</p></div>',choices:[" "]};}
+function onePair(source,isPractice,index){
+ const fA=getFeatureVector(source.left_cues), fB=getFeatureVector(source.right_cues);
+ const correctKey=source.correct_side==="left"?"a":"d";
+ const common={source_trial_id:source.trial_id,pair_index:source.pair_index,source_correct_side:source.correct_side,trial_index:index+1,is_practice:isPractice};
+ const seq=[];
+ if(SHOW_DV_BEFORE_TRIAL)seq.push({type:jsPsychHtmlKeyboardResponse,stimulus:trialDvHtml(),choices:[" "],data:{...common,phase:"dv_cue",dv_cue_advance:"space"}});
+ seq.push({type:clickrec,data:{...common,phase:"fixation"}});
+ seq.push({type:citysearch,features_a:fA,features_b:fB,feature_labels:orderedFeatures.map(f=>f.label),feature_ids:orderedFeatures.map(f=>f.id),feature_positive:orderedFeatures.map(f=>f.positive),correct_key:correctKey,choices:CHOICE_KEYS,is_practice:isPractice,trial_index:index+1,city_a_name:source.left_city,city_b_name:source.right_city,city_a_pop:source.left_population,city_b_pop:source.right_population,immediate_finish:SHOW_CORRECT_FEEDBACK,data:{...common,phase:"choice",condition:CONDITION,feedback_mode:FEEDBACK_MODE}});
+ if(SHOW_CORRECT_FEEDBACK){
+  seq.push({type:cityfeedback,features_a:fA,features_b:fB,feature_labels:orderedFeatures.map(f=>f.label),larger_city:source.correct_side==="left"?"A":"B",choice_city:()=>{let r=jsPsych.data.get().filter({trial_type:"city-search"}).last(1).values()[0];return r?.choice_city||"";},correct:()=>{let r=jsPsych.data.get().filter({trial_type:"city-search"}).last(1).values()[0];return Boolean(r?.correct);},is_practice:isPractice,data:{...common,phase:"feedback"}});
+ }
+ return {timeline:seq};
+}
+const timeline=[];
+function buildTimeline(){
+timeline.push(intro('<h2>Welcome</h2><p>You will judge which of two <b>anonymous German cities</b> has the larger population. Each city has five Yes/No features. Hover over a covered cell to reveal its value; the cell is covered again when you leave.</p><p>Use the mouse with your right hand to search for information. Press <b>A</b> (left city) or <b>D</b> (right city) with your left hand when you are ready. You may inspect features in any order. City names are not shown during the decision.</p>'));
+timeline.push(intro('<h2>Features</h2><p>Capital: Germany\'s national capital. Expo Site: has hosted an international exhibition. Soccer Team: has a top-league football club. Rail Line: has an intercity rail connection. University: has a university.</p><p>The same five features stay in the same positions for your entire session.</p>'));
+const feedbackInstructions = SHOW_CORRECT_FEEDBACK
+ ? 'After each response, all ten feature values will be revealed and the city with the larger population will be highlighted. Press <b>Space</b> to continue.'
+ : 'After each response, you will briefly see which city you chose. You will <b>not</b> be told which city was correct.';
+if (SHOW_DV_BEFORE_TRIAL) {
+ timeline.push(intro('<h2>Feature statistics</h2><p><b>Discrimination</b> means the probability that a feature differs between the two cities. <b>Validity</b> means the probability that the feature points toward the more populous city <em>when the two cities differ on that feature</em>.</p><p>You will see this table before each decision. Press <b>Space</b> when you are ready to continue.</p><p>'+feedbackInstructions+'</p>'+cueTable()));
+} else {
+ timeline.push(intro('<h2>Response feedback</h2><p>You will not be told the discrimination or validity of the features.</p><p>'+feedbackInstructions+'</p>'));
+}
+timeline.push(intro('<h2>Practice</h2><p>You will complete '+N_PRACTICE+' practice trials before the main experiment. The practice city pairs are distinct from the main experiment.</p>'));
+PRACTICE_TRIALS.forEach((t,i)=>timeline.push(onePair(t,true,i)));
+timeline.push(intro('<h2>Main experiment</h2><p>Practice complete. The main experiment contains '+N_TRIALS+' trials. Please respond as carefully as you can.</p>'));
+MAIN_TRIALS.forEach((t,i)=>timeline.push(onePair(t,false,i)));
+timeline.push(intro('<h2>Finished</h2><p>Thank you for participating. Press Space to finish and save your data.</p>'));
+}
+function completeExperiment(){
+ const data=jsPsych.data.get().values();
+ const payload={metadata,records:data,completed_at:new Date().toISOString()};
+ window.GECITY_RESULT=payload;
+ const encoded=JSON.stringify(payload);
+ // Parent-page integration: embed in a trusted Qualtrics page/iframe. The parent should
+ // listen for {type:"GECITY_COMPLETE", payload} and save the data server-side.
+ // Restrict parent messages to an explicitly configured origin.
+ const parentOrigin=params.get("parent_origin");
+ if(window.parent!==window && parentOrigin){window.parent.postMessage({type:"GECITY_COMPLETE",payload},parentOrigin);}
+ if(DEBUG || params.get("download")==="1"){
+  const blob=new Blob([encoded],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="gecity_"+SESSION_ID+".json";a.textContent="Download experiment JSON";a.style.display="block";a.style.padding="18px";document.body.appendChild(a);
+  a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
+ }
+}
+function startExperiment(){
+ try{
+  const loaded=loadTrialsetFromJavaScript(shuffle,N_PRACTICE);
+  // All participants see the same D/V table in D-ascending, V-descending order.
+  // Choice/search feature rows are shuffled ONCE for each new session.
+  statisticsFeatures=loaded.features.slice().sort((a,b)=>
+    a.target_discrimination-b.target_discrimination ||
+    b.target_validity-a.target_validity ||
+    a.label.localeCompare(b.label));
+  orderedFeatures=shuffle(loaded.features);
+  featureIndices=orderedFeatures.map(f=>loaded.features.findIndex(v=>v.id===f.id));
+  POSITION_FEATURE_MAP=orderedFeatures.map((f,i)=>({position:i+1,feature_id:f.id,feature_label:f.label}));
+  N_TRIALS=DEBUG?Math.max(1,Math.min(loaded.trials.length,Number(params.get("trials") ?? loaded.trials.length)||loaded.trials.length)):loaded.trials.length;
+  MAIN_TRIALS=shuffle(loaded.trials).slice(0,N_TRIALS);
+  PRACTICE_TRIALS=loaded.practice;
+  TRIALSET_SOURCE=loaded.source_file;
+  metadata={experiment_version:"js-data-v1",trialset:loaded.trialset_name,trialset_source:TRIALSET_SOURCE,condition:CONDITION,show_dv_before_trial:SHOW_DV_BEFORE_TRIAL,feedback_mode:FEEDBACK_MODE,participant_id:PARTICIPANT_ID,session_id:SESSION_ID,random_seed:SEED,debug:DEBUG,main_trial_count:N_TRIALS,practice_trial_count:N_PRACTICE,statistics_feature_order:statisticsFeatures.map(f=>f.id),feature_order:orderedFeatures.map(f=>f.id),position_feature_map:POSITION_FEATURE_MAP,feature_statistics:loaded.features,layout_config:LAYOUT_CONFIG};
+  jsPsych.data.addProperties(metadata);
+  buildTimeline();
+  document.body.innerHTML="";
+  jsPsych.run(timeline);
+ }catch(err){
+  console.error("GeCity experiment startup failed:",err);
+  document.body.innerHTML='<main style="font:16px/1.6 Arial,sans-serif;max-width:760px;margin:48px auto;padding:20px"><h2>Experiment could not start</h2><p>'+escapeHTML(err.message)+'</p><p>Copy the latest <code>experiment_data.js</code> from your trialset output folder into <code>v1/data/</code>, then reload <code>index.html</code>.</p></main>';
+ }
+}
+startExperiment();
+</script>
+</body>
+</html>
