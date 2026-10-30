@@ -21,24 +21,30 @@
 <script>
 "use strict";
 
-// ================== EXPERIMENT CONDITIONS (EDIT HERE) ==================
-// Independent options: all four combinations are supported.
-// true: show the fixed D/V table before each trial (Space to continue).
-// false: skip the D/V table.
-const SHOW_DV_BEFORE_TRIAL = true;
-
-// true: show the correct city and all cue values (Space to continue).
-// false: briefly show "You chose City A/B" (600 ms), without correctness.
-const SHOW_CORRECT_FEEDBACK = false;
+// ================== EXPERIMENT CONDITIONS (URL-SELECTABLE) ==============
+// Qualtrics iframe parameters:
+//   table=1/0    Show/hide the D/V table (default: 1).
+//   feedback=1/0 Show/hide correct-answer feedback (default: 0).
+//   short=1/0    One main trial, no practice trials (default: 0).
+//   download=1   Attempt JSON download when the experiment finishes.
+// The legacy debug=1, trials=N and practice=N options still work unless short=1.
+const params = new URLSearchParams(location.search);
+function booleanParam(name, fallback) {
+ const value = params.get(name);
+ if(value === null) return fallback;
+ if(value === "1" || value.toLowerCase() === "true") return true;
+ if(value === "0" || value.toLowerCase() === "false") return false;
+ return fallback;
+}
+const SHOW_DV_BEFORE_TRIAL = booleanParam("table", true);
+const SHOW_CORRECT_FEEDBACK = booleanParam("feedback", false);
+const SHORT_TEST = booleanParam("short", false);
 // =======================================================================
 
-// Derive descriptive metadata labels; experimental settings are booleans above.
 const FEEDBACK_MODE = SHOW_CORRECT_FEEDBACK ? "correct" : "choice";
 const CONDITION = (SHOW_DV_BEFORE_TRIAL ? "dv_" : "no_dv_") + FEEDBACK_MODE;
-// Optional URL parameters: participant, seed; debug=1 enables shorter practice/trials.
-const params = new URLSearchParams(location.search);
 const DEBUG = params.get("debug")==="1";
-const N_PRACTICE = DEBUG ? Math.max(0,Math.min(5,Number(params.get("practice") ?? 5)||0)) : 5;
+const N_PRACTICE = SHORT_TEST ? 0 : (DEBUG ? Math.max(0,Math.min(5,Number(params.get("practice") ?? 5)||0)) : 5);
 let N_TRIALS = 0;
 const PARTICIPANT_ID = params.get("participant") || params.get("PROLIFIC_PID") || "anonymous";
 const SESSION_ID = "gc-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,10);
@@ -83,9 +89,13 @@ if (SHOW_DV_BEFORE_TRIAL) {
 } else {
  timeline.push(intro('<h2>Response feedback</h2><p>You will not be told the discrimination or validity of the features.</p><p>'+feedbackInstructions+'</p>'));
 }
-timeline.push(intro('<h2>Practice</h2><p>You will complete '+N_PRACTICE+' practice trials before the main experiment. The practice city pairs are distinct from the main experiment.</p>'));
-PRACTICE_TRIALS.forEach((t,i)=>timeline.push(onePair(t,true,i)));
-timeline.push(intro('<h2>Main experiment</h2><p>Practice complete. The main experiment contains '+N_TRIALS+' trials. Please respond as carefully as you can.</p>'));
+if (!SHORT_TEST) {
+ timeline.push(intro('<h2>Practice</h2><p>You will complete '+N_PRACTICE+' practice trials before the main experiment. The practice city pairs are distinct from the main experiment.</p>'));
+ PRACTICE_TRIALS.forEach((t,i)=>timeline.push(onePair(t,true,i)));
+}
+timeline.push(intro(SHORT_TEST
+ ? '<h2>Short test</h2><p>This test contains just one decision trial, with no practice trials. Press Space to begin.</p>'
+ : '<h2>Main experiment</h2><p>Practice complete. The main experiment contains '+N_TRIALS+' trials. Please respond as carefully as you can.</p>'));
 MAIN_TRIALS.forEach((t,i)=>timeline.push(onePair(t,false,i)));
 timeline.push(intro('<h2>Finished</h2><p>Thank you for participating. Press Space to finish and save your data.</p>'));
 }
@@ -118,11 +128,11 @@ function startExperiment(){
   orderedFeatures=shuffle(loaded.features);
   featureIndices=orderedFeatures.map(f=>loaded.features.findIndex(v=>v.id===f.id));
   POSITION_FEATURE_MAP=orderedFeatures.map((f,i)=>({position:i+1,feature_id:f.id,feature_label:f.label}));
-  N_TRIALS=DEBUG?Math.max(1,Math.min(loaded.trials.length,Number(params.get("trials") ?? loaded.trials.length)||loaded.trials.length)):loaded.trials.length;
+  N_TRIALS=SHORT_TEST?1:(DEBUG?Math.max(1,Math.min(loaded.trials.length,Number(params.get("trials") ?? loaded.trials.length)||loaded.trials.length)):loaded.trials.length);
   MAIN_TRIALS=shuffle(loaded.trials).slice(0,N_TRIALS);
   PRACTICE_TRIALS=loaded.practice;
   TRIALSET_SOURCE=loaded.source_file;
-  metadata={experiment_version:"js-data-v1",trialset:loaded.trialset_name,trialset_source:TRIALSET_SOURCE,condition:CONDITION,show_dv_before_trial:SHOW_DV_BEFORE_TRIAL,feedback_mode:FEEDBACK_MODE,participant_id:PARTICIPANT_ID,session_id:SESSION_ID,random_seed:SEED,debug:DEBUG,main_trial_count:N_TRIALS,practice_trial_count:N_PRACTICE,statistics_feature_order:statisticsFeatures.map(f=>f.id),feature_order:orderedFeatures.map(f=>f.id),position_feature_map:POSITION_FEATURE_MAP,feature_statistics:loaded.features,layout_config:LAYOUT_CONFIG};
+  metadata={experiment_version:"js-data-v1",trialset:loaded.trialset_name,trialset_source:TRIALSET_SOURCE,condition:CONDITION,show_dv_before_trial:SHOW_DV_BEFORE_TRIAL,feedback_mode:FEEDBACK_MODE,participant_id:PARTICIPANT_ID,session_id:SESSION_ID,random_seed:SEED,debug:DEBUG,short_test:SHORT_TEST,main_trial_count:N_TRIALS,practice_trial_count:N_PRACTICE,statistics_feature_order:statisticsFeatures.map(f=>f.id),feature_order:orderedFeatures.map(f=>f.id),position_feature_map:POSITION_FEATURE_MAP,feature_statistics:loaded.features,layout_config:LAYOUT_CONFIG};
   jsPsych.data.addProperties(metadata);
   buildTimeline();
   document.body.innerHTML="";
