@@ -16,7 +16,7 @@ Add a **Text / Graphic** question in its own survey block/page, open the questio
 
 ```html
 <iframe id="experiment-frame"
-  src="https://bs-zhao.github.io/GeCity-run/?download=1"
+  src="https://bs-zhao.github.io/GeCity-run/?download=1&amp;feedback=0&amp;table=1&amp;short=0"
   title="German City Decision-Making"
   style="width:100%;height:85vh;min-height:650px;border:0;display:block"
   allow="fullscreen"
@@ -25,14 +25,29 @@ Add a **Text / Graphic** question in its own survey block/page, open the questio
 
 Place a **File Upload** question on the following Qualtrics page and instruct participants to upload their downloaded `gecity_*.json` file. **Neither uploading to GitHub nor embedding this iframe automatically saves trial data in Qualtrics.** The JSON download and upload must be verified in Qualtrics Preview. Advance to the upload page only after the experiment is finished and the file is downloaded; plain iframe HTML does not automatically block the Qualtrics Next button.
 
-The source program's two independent condition constants are in `index.html`:
-```js
-const SHOW_DV_BEFORE_TRIAL = true;
-const SHOW_CORRECT_FEEDBACK = false;
-```
-The D/V table always has fixed increasing discrimination and decreasing validity order; the decision-screen attribute order randomizes once per session and stays fixed. Complete participant-level choice, reaction-time and mouse-inspection records are exported.
+Set the three experiment conditions **directly in the iframe URL** (no JavaScript editing needed):
 
-For short pilots, visit `https://bs-zhao.github.io/GeCity-run/?debug=1&trials=3&practice=2&download=1`.
+| URL parameter | `0` | `1` | Default |
+| --- | --- | --- | --- |
+| `feedback` | Show brief choice acknowledgment, no correctness | Show the correct city and revealed cue values | `0` |
+| `table` | Hide the D/V table | Show the fixed D/V table before each trial | `1` |
+| `short` | Full experiment: 5 practice and 150 main trials | Short test: **0 practice and 1 main trial** | `0` |
+| `download` | No automatic JSON download | Attempt automatic JSON download on completion | Not set |
+
+Example: one-trial pilot, with feedback and without the D/V table:
+
+```html
+<iframe
+  src="https://bs-zhao.github.io/GeCity-run/?download=1&amp;feedback=1&amp;table=0&amp;short=1"
+  title="German City Decision-Making"
+  style="width:100%;height:800px;border:0;"
+  allowfullscreen>
+</iframe>
+```
+
+Use `&amp;` between URL query parameters in literal HTML, as shown. Short mode keeps the introductory and ending screens but skips the practice block and restricts the main decision set to one trial. The JSON metadata records the settings (`condition`, `feedback_mode`, `show_dv_before_trial`, `short_test`, `main_trial_count`, `practice_trial_count`). The D/V table retains fixed increasing discrimination and decreasing validity order; the decision-screen attribute order randomizes once per session and stays fixed. Choice, reaction-time and mouse-inspection records are exported.
+
+The legacy `debug=1&trials=3&practice=2&download=1` pilot options remain available; `short=1` takes precedence over their trial/practice counts.
 
 ## Files and updates
 
