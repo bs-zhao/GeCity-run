@@ -151,7 +151,14 @@ timeline.push(intro(SHORT_TEST
  : '<h2>Main experiment</h2><p>Practice complete. The main experiment contains '+N_TRIALS+' trials. Please respond as carefully as you can.</p>'));
 if (SHORT_TEST) timeline.push(intro(blackSquareReminder));
 MAIN_TRIALS.forEach((t,i)=>timeline.push(onePair(t,false,i)));
-timeline.push(intro('<h2>Finished</h2><p>Thank you for participating. Press Space to finish and save your data.</p>'));
+timeline.push({
+ type:jsPsychHtmlKeyboardResponse,
+ stimulus:'<div class="gc-intro"><h2>Experiment complete</h2>'+
+  '<p>Press <b>Space</b> to exit fullscreen.</p>'+
+  ((DEBUG || params.get("download")==="1") ? '<p>Your data file will download automatically.</p>' : '')+
+  '</div>',
+ choices:[" "]
+});
 }
 function completeExperiment(){
  const data=jsPsych.data.get().values();
