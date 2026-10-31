@@ -23,7 +23,7 @@ Add a **Text / Graphic** question in its own survey block/page, open the questio
 ></iframe>
 ```
 
-Place a **File Upload** question on the following Qualtrics page and instruct participants to upload their downloaded `gecity_*.json` file. **Neither uploading to GitHub nor embedding this iframe automatically saves trial data in Qualtrics.** The JSON download and upload must be verified in Qualtrics Preview. Advance to the upload page only after the experiment is finished and the file is downloaded; plain iframe HTML does not automatically block the Qualtrics Next button.
+Place a **File Upload** question directly below the iframe on the **same Qualtrics page** and instruct participants to upload the automatically downloaded `gecity_*.json` file. **Neither uploading to GitHub nor embedding this iframe automatically saves trial data in Qualtrics.** The JSON download and upload must be verified in Qualtrics Preview. Advance to the upload page only after the experiment is finished and the file is downloaded; plain iframe HTML does not automatically block the Qualtrics Next button.
 
 Set the three experiment conditions **directly in the iframe URL** (no JavaScript editing needed):
 
@@ -56,3 +56,28 @@ The website `index.html` and its relative `plugin/`, `layout_config.js`, `trials
 This repository is **public**. Do not commit participant JSON results, personal identifiers, non-public research materials, secrets, or consent data. It contains stimuli and experimental logic that will be publicly accessible.
 
 The runtime currently loads jsPsych assets from the Naodao CDN and therefore requires that third-party CDN to be reachable. If that CDN does not load from Qualtrics participants' networks, replace it with a reliable public jsPsych 7 host or bundle tested local copies before recruitment.
+
+## Behavioral data schema (record_schema_version 2)
+
+Every choice trial saves its response and mouse-hover search behavior in the exported JSON `records` array. The `metadata` object includes the random seed and `position_feature_map` for that session.
+
+**Important IDs are intentionally distinct:**
+
+| Field | Meaning |
+| --- | --- |
+| `feature_id` | Stable identity of the characteristic (e.g., capital or rail); **not** its display row |
+| `position_id` | Vertical display position, **1 = top** through **5 = bottom**; randomized once per participant, fixed throughout their practice and main trials |
+| `cell_id` | Specific city/row cell: City A positions 1–5 map to cell IDs 1–5; City B positions 1–5 map to 6–10 |
+| `city` | City A or City B (left/right) |
+
+Per choice trial:
+
+- `position_feature_map`: exact top-to-bottom feature order, row-center `row_y_px`, and left/right `cell_id` values; `feature_ids` and `feature_labels` are also in top-to-bottom display order.
+- `stimulus_cells`: all ten city-feature cells and their actual Yes/No values, including cells the participant never viewed.
+- `mouse_reveals`: every hover in chronological order, with `order`, `city`, `position_id`, `cell_id`, `feature_id`, `value`, `start_ms`, `end_ms`, `duration_ms`, and `end_reason` (`mouse_leave`, `switch`, or `response`). Times are milliseconds from that choice screen's onset.
+- `event_timeline`: chronological mouse-enter, mouse-exit, and key-response events with relative timestamps.
+- `view_summary`: counts and cumulative dwell time separately for each of the ten cells. The legacy `view_counts`, `dwell_times`, `arr_fix`, and `arr_time` fields are retained for backwards compatibility.
+- `response`, `choice_city`, `correct`, `rt`, `decision_rt_ms`: response key, chosen city, correctness, jsPsych reaction time, and choice-screen response timestamp.
+- `task_trial_index` and `task_phase`: stable index within the practice/main phase; the jsPsych-wide `trial_index` can refer to the overall timeline instead.
+
+The Table group's D/V statistics page is always ordered by increasing discrimination and **is not** the randomized visual order of the five decision-screen rows. Do not decode mouse data by the fixed table order.
