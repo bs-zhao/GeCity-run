@@ -20,7 +20,8 @@ var citysearch = (function (jspsych) {
                 default: undefined,
             },
             feature_ids: {
-  // 1-5 for A side, 6-10 for B side encoding
+                // Stable attribute IDs, ordered by the randomized on-screen rows (top to bottom).
+                // These are not the row position IDs or the 1-10 city-cell IDs.
                 type: jspsych.ParameterType.STRING,
                 array: true,
                 default: undefined,
@@ -106,8 +107,10 @@ var citysearch = (function (jspsych) {
             let firstCell = null;
             let lastCellBeforeResponse = 0;
 
+            // position_id = 1..N (top to bottom); cell_id = 1..2N (city + row).
+            // feature_id is the stable semantic attribute ID, independent of display position.
             function cellId(citySide, featIdx) {
-                return citySide === "A" ? featIdx + 1 : featIdx + 6;
+                return citySide === "A" ? featIdx + 1 : featIdx + N + 1;
             }
 
             function cellDetails(code) {
@@ -115,7 +118,9 @@ var citysearch = (function (jspsych) {
                 const city = code <= N ? "A" : "B";
                 const value = city === "A" ? trial.features_a[featureIndex] : trial.features_b[featureIndex];
                 return {
+                    cell_id: code,
                     city: city,
+                    position_id: featureIndex + 1,
                     feature_position: featureIndex + 1,
                     feature_id: trial.feature_ids[featureIndex],
                     feature_label: trial.feature_labels[featureIndex],
@@ -140,7 +145,9 @@ var citysearch = (function (jspsych) {
                 const completed = {
                     order: currentReveal.order,
                     cell: cell,
+                    cell_id: cell,
                     city: currentReveal.city,
+                    position_id: currentReveal.position_id,
                     feature_position: currentReveal.feature_position,
                     feature_id: currentReveal.feature_id,
                     feature_label: currentReveal.feature_label,
@@ -154,7 +161,14 @@ var citysearch = (function (jspsych) {
                 mouseReveals.push(completed);
                 dwellTimes[cell] += duration;
                 if (currentElement !== null) currentElement.textContent = "?";
-                pushEvent(0, "exit", now, { from_cell: cell, reason: reason });
+                pushEvent(0, "exit", now, {
+                    from_cell: cell,
+                    from_cell_id: cell,
+                    city: currentReveal.city,
+                    position_id: currentReveal.position_id,
+                    feature_id: currentReveal.feature_id,
+                    reason: reason,
+                });
                 currentCell = 0;
                 currentReveal = null;
                 currentElement = null;
@@ -343,6 +357,8 @@ var citysearch = (function (jspsych) {
                     arr_time: arr_time,
                     event_timeline: eventTimeline,
                     mouse_reveals: mouseReveals,
+                    // A complete per-trial mapping of every visible cell, including never-viewed cells.
+                    stimulus_cells: Array.from({ length: N * 2 }, (_, index) => cellDetails(index + 1)),
                     view_counts: viewCounts,
                     dwell_times: dwellTimes,
                     view_summary: Array.from({ length: N * 2 }, (_, index) => {
@@ -356,8 +372,11 @@ var citysearch = (function (jspsych) {
                     first_side: firstSide,
                     first_feature_idx: firstFeatureIdx,
                     first_feature_position: firstFeatureIdx !== null ? firstFeatureIdx + 1 : null,
+                    first_position_id: firstFeatureIdx !== null ? firstFeatureIdx + 1 : null,
                     first_feature_id: firstFeatureIdx !== null ? trial.feature_ids[firstFeatureIdx] : null,
                     last_cell_before_response: lastCellBeforeResponse,
+                    last_position_id: lastCellBeforeResponse ? (lastCellBeforeResponse - 1) % N + 1 : null,
+                    last_feature_id: lastCellBeforeResponse ? trial.feature_ids[(lastCellBeforeResponse - 1) % N] : null,
                     n_unique_viewed: nUnique,
                     n_total_views: nTotalViews,
                     n_repeated_views: nRepeated,
@@ -373,8 +392,18 @@ var citysearch = (function (jspsych) {
                     features_b: trial.features_b,
                     feature_labels: trial.feature_labels,
                     feature_ids: trial.feature_ids,
+                    // Display position is randomized between participants, but remains fixed
+                    // within each session. Record the actual top-to-bottom arrangement here.
                     position_feature_map: trial.feature_ids.map(function (id, i) {
-                        return { position: i + 1, feature_id: id, feature_label: trial.feature_labels[i] };
+                        return {
+                            position_id: i + 1,
+                            position: i + 1, // Backward-compatible alias.
+                            row_y_px: rows[i].y,
+                            left_cell_id: cellId("A", i),
+                            right_cell_id: cellId("B", i),
+                            feature_id: id,
+                            feature_label: trial.feature_labels[i],
+                        };
                     }),
                 };
 
