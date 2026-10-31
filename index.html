@@ -80,12 +80,15 @@ function onePair(source,isPractice,index){
 const timeline=[];
 function buildTimeline(){
 timeline.push(intro('<h2>Welcome</h2><p>Choose which city has the larger population.</p><p>Hover over a cell to reveal it; move away to hide it.</p><p><b>Right hand:</b> mouse. <b>Left hand:</b> <b>A</b> (left city) or <b>D</b> (right city).</p>'));
-timeline.push(intro('<h2>Features</h2><p>Capital: Germany\'s national capital. Expo Site: has hosted an international exhibition. Soccer Team: has a top-league football club. Rail Line: has an intercity rail connection. University: has a university.</p><p>The same five features stay in the same positions for your entire session.</p>'));
 const feedbackInstructions = SHOW_CORRECT_FEEDBACK
  ? 'After each response, all ten feature values will be revealed and the city with the larger population will be highlighted. Press <b>Space</b> to continue.'
  : 'After each response, you will briefly see which city you chose. You will <b>not</b> be told which city was correct.';
 if (SHOW_DV_BEFORE_TRIAL) {
- timeline.push(intro('<h2>Feature statistics</h2><p><b>Discrimination</b> means the probability that a feature differs between the two cities. <b>Validity</b> means the probability that the feature points toward the more populous city <em>when the two cities differ on that feature</em>.</p><p>You will see this table before each decision. Press <b>Space</b> when you are ready to continue.</p><p>'+feedbackInstructions+'</p>'+cueTable()));
+ timeline.push(intro('<h2>Feature statistics</h2>'+
+  '<p><b>Discrimination:</b> How often a feature differs between two cities.</p>'+
+  '<p><b>Validity:</b> When a feature differs, how often it indicates the larger city.</p>'+
+  '<p>This table appears before each decision.</p>'+cueTable()+
+  '<p>After each response, you will see your choice, but not whether it was correct.</p>'));
 } else {
  timeline.push(intro('<h2>Response feedback</h2><p>You will not be told the discrimination or validity of the features.</p><p>'+feedbackInstructions+'</p>'));
 }
