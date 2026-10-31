@@ -126,7 +126,21 @@ function onePair(source,isPractice,index){
 }
 const timeline=[];
 function buildTimeline(){
-timeline.push(intro('<h2>Welcome</h2><p>Choose which city has the larger population.</p><p>Hover over a cell to reveal it; move away to hide it.</p><p>Place one hand on the mouse and the other on the <b>A</b> and <b>D</b> keys.</p><p>Press <b>A</b> for the left city or <b>D</b> for the right city.</p>'));
+const taskInstructions =
+ '<h2>Welcome</h2>'+
+ (SHORT_TEST
+   ? '<p>This short test contains 1 main trial and no practice trials.</p>'
+   : '<p>You will complete '+N_PRACTICE+' practice trials followed by '+N_TRIALS+' main trials.</p>')+
+ '<p>Choose which city has the larger population.</p>'+
+ '<p>Hover over a feature to reveal its value; move away to hide it.</p>'+
+ '<p>Place one hand on the mouse and the other on the <b>A</b> and <b>D</b> keys.</p>'+
+ '<p>Press <b>A</b> for City A or <b>D</b> for City B.</p>'+
+ (SHOW_DV_BEFORE_TRIAL
+   ? '<p>You will see the feature statistics before each decision.</p>'
+   : SHOW_CORRECT_FEEDBACK
+      ? '<p>You will receive feedback after each decision.</p>'
+      : '');
+timeline.push(intro(taskInstructions));
 timeline.push({type:FullscreenSpacePlugin});
 const feedbackInstructions = SHOW_CORRECT_FEEDBACK
  ? 'After each response, all ten feature values will be revealed and the city with the larger population will be highlighted. Press <b>Space</b> to continue.'
