@@ -53,30 +53,27 @@ Use `&amp;` between URL query parameters in literal HTML, as shown. Short mode k
 
 The legacy `debug=1&trials=3&practice=2&download=1` pilot options remain available; `short=1` takes precedence over their trial/practice counts.
 
-### Focus instructions and timed breaks
+### Focus instructions and simple breaks
 
-After the initial Welcome screen, a separate **Please Stay Focused** page
-explains that decision times and inspected information are analyzed. Participants
-are asked not to multitask outside scheduled breaks.
+After the Welcome screen, a separate **Please Stay Focused** page reminds
+participants that decision times and inspected information are analyzed, and
+asks them not to multitask outside scheduled breaks.
 
-In the full 150-trial experiment, a rest screen appears **after main trial 50
-(1/3 completed)** and **after main trial 100 (2/3 completed)**. Each screen
-shows progress, an **elapsed break clock starting at 00:00 (MM:SS)**, and a
-**Press Space to continue** prompt. Breaks have no forced minimum or maximum
-duration. Three practice trials occur before the main task and never count
-toward the 50/100 break boundaries. Each break is shown only after the full
-decision and, where applicable, feedback have finished.
+In the full 150-trial experiment, a simple **Take a Break** screen appears
+after main trial **50 (1/3)** and main trial **100 (2/3)**. It shows how many
+trials have been completed and **Press Space to continue**. There is **no
+visible timer, no break-duration measurement and no enforced break length**.
+The three practice trials do not count toward these breaks. A break begins
+only after the decision (and feedback, if applicable) has finished.
 
-Exported JSON records a separate `phase: "break"` trial containing
-`break_duration_ms`, `break_number`, `completed_main_trials`,
-`progress_fraction`, and UTC start/end timestamps. These break durations
-are **not part of individual choice reaction times**. The run-level metadata
-contains `scheduled_break_after_trials: [50,100]`.
+The JSON includes separate `phase: "break"` rows with progress and break
+number, but no break-duration fields. Metadata records
+`scheduled_break_after_trials: [50,100]`.
 
-For a fast end-to-end test of both break pages, use:
+For a fast test of both break screens, use:
 `?table=1&feedback=0&debug=1&trials=3&practice=0&download=1`
 (the breaks then appear after debug main trials 1 and 2). The `short=1`
-one-trial mode deliberately skips both scheduled breaks.
+one-trial mode skips both breaks.
 
 ## Current deployed trial set (trialset8)
 
