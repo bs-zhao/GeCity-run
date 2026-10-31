@@ -79,7 +79,7 @@ function onePair(source,isPractice,index){
 }
 const timeline=[];
 function buildTimeline(){
-timeline.push(intro('<h2>Welcome</h2><p>Choose which city has the larger population.</p><p><b>Before every trial, click the black square in the center of the screen to begin.</b></p><p>Hover over a cell to reveal it; move away to hide it.</p><p>Place one hand on the mouse and the other on the <b>A</b> and <b>D</b> keys.</p><p>Press <b>A</b> for the left city or <b>D</b> for the right city.</p>'));
+timeline.push(intro('<h2>Welcome</h2><p>Choose which city has the larger population.</p><p>Hover over a cell to reveal it; move away to hide it.</p><p>Place one hand on the mouse and the other on the <b>A</b> and <b>D</b> keys.</p><p>Press <b>A</b> for the left city or <b>D</b> for the right city.</p>'));
 const feedbackInstructions = SHOW_CORRECT_FEEDBACK
  ? 'After each response, all ten feature values will be revealed and the city with the larger population will be highlighted. Press <b>Space</b> to continue.'
  : 'After each response, you will briefly see which city you chose. You will <b>not</b> be told which city was correct.';
@@ -92,13 +92,16 @@ if (SHOW_DV_BEFORE_TRIAL) {
 } else {
  timeline.push(intro('<h2>Response feedback</h2><p>'+feedbackInstructions+'</p>'));
 }
+const blackSquareReminder = '<p style="text-align:center"><b>Before every trial, click the black square in the center of the screen to begin.</b></p>';
 if (!SHORT_TEST) {
  timeline.push(intro('<h2>Practice</h2><p>You will complete '+N_PRACTICE+' practice trials before the main experiment. The practice city pairs are distinct from the main experiment.</p>'));
+ timeline.push(intro(blackSquareReminder));
  PRACTICE_TRIALS.forEach((t,i)=>timeline.push(onePair(t,true,i)));
 }
 timeline.push(intro(SHORT_TEST
- ? '<h2>Short test</h2><p>This test contains just one decision trial, with no practice trials. Press Space to begin.</p>'
+ ? '<h2>Short test</h2><p>This test contains just one decision trial, with no practice trials.</p>'
  : '<h2>Main experiment</h2><p>Practice complete. The main experiment contains '+N_TRIALS+' trials. Please respond as carefully as you can.</p>'));
+if (SHORT_TEST) timeline.push(intro(blackSquareReminder));
 MAIN_TRIALS.forEach((t,i)=>timeline.push(onePair(t,false,i)));
 timeline.push(intro('<h2>Finished</h2><p>Thank you for participating. Press Space to finish and save your data.</p>'));
 }
