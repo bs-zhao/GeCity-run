@@ -53,11 +53,13 @@ Use `&amp;` between URL query parameters in literal HTML, as shown. Short mode k
 
 The legacy `debug=1&trials=3&practice=2&download=1` pilot options remain available; `short=1` takes precedence over their trial/practice counts.
 
-## Current deployed trial set (trialset5)
+## Current deployed trial set (trialset8)
 
-The website now uses `trialset5`, selected from 83 German cities with **150 real-city pairs**. Five cue D targets are **5%, 25%, 40%, 55%, 75%**; V targets are **100%, 90%, 75%, 65%, 55%** (Capital, Expo Site, Soccer Team, Rail Line, University). Actual cue rates differ slightly due to integer trial counts.
+The website uses **trialset8**, a search-optimized set of **150 unique pairs of German cities**. Targets in feature order (Capital, Expo Site, Soccer Team, Rail Line, University): discrimination **5%, 29%, 41%, 52%, 62%** and validity **100%, 88%, 77%, 66%, 55%**. Realized rates are D **5.33%, 29.33%, 41.33%, 52.00%, 62.00%** and V **100.00%, 88.64%, 77.42%, 65.38%, 54.84%**.
 
-Selection quotas: **more than 15% conflicting-cue trials** (at least 23 of 150) and **fewer than 30% single-difference trials** (at most 44 of 150). The deployed set contains **54 conflicting-cue trials (36.0%)** and **41 single-difference trials (27.3%)**, with pairwise discrimination correlations within the original [-0.1, 0.5] guardrail.
+The original hard requirements are unchanged: **48/150 (32.00%) opposing-cue trials** (>15%), **44/150 (29.33%) single-difference trials** (<30%), and all pairwise discrimination correlations in **[-0.10, 0.50]** (actual range **[-0.09895, 0.04258]**). Search-focused optimization also achieves **83 distinct cities**, **33 distinct unordered five-cue-profile pairs**, at most **10 occurrences per city** and **12 per cue-profile pair**; it fixes the previous extreme conditional validity of Rail Line and University on single-cue trials.
+
+The exact 150 selected unordered pairs are frozen in the private source repository's `s1_make_trials/trialsets/trialset8/selected_pair_indices.json`. Run `python s1_make_trials/make_trials.py` there to regenerate; `optimize_trialset8.py` creates candidate selections without overwriting the deployed manifest.
 
 The D/V table displayed *inside the experiment* is generated directly from these file statistics. **Any D/V percentages entered as static text in Qualtrics must be updated separately before data collection.**
 
