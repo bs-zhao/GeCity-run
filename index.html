@@ -90,7 +90,7 @@ if (SHOW_DV_BEFORE_TRIAL) {
   '<p>This table appears before each decision.</p>'+cueTable()+
   '<p>After each response, you will see your choice, but not whether it was correct.</p>'));
 } else {
- timeline.push(intro('<h2>Response feedback</h2><p>You will not be told the discrimination or validity of the features.</p><p>'+feedbackInstructions+'</p>'));
+ timeline.push(intro('<h2>Response feedback</h2><p>'+feedbackInstructions+'</p>'));
 }
 if (!SHORT_TEST) {
  timeline.push(intro('<h2>Practice</h2><p>You will complete '+N_PRACTICE+' practice trials before the main experiment. The practice city pairs are distinct from the main experiment.</p>'));
