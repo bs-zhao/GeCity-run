@@ -60,7 +60,7 @@ let statisticsFeatures,orderedFeatures,featureIndices,POSITION_FEATURE_MAP,MAIN_
 function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function getFeatureVector(values){return featureIndices.map(i=>values[i]);}
 function cueTable(){return '<table><thead><tr><th>Feature</th><th>Discrimination</th><th>Validity</th></tr></thead><tbody>'+statisticsFeatures.map(f=>'<tr><td>'+escapeHTML(f.label)+'</td><td>'+(f.target_discrimination*100).toFixed(0)+'%</td><td>'+(f.target_validity*100).toFixed(0)+'%</td></tr>').join("")+'</tbody></table>';}
-function trialDvHtml(){return '<div class="gc-intro">'+cueTable()+'</div>';}
+function trialDvHtml(){return '<div class="gc-intro">'+cueTable()+'<p style="text-align:center">Press <b>Space</b> to continue.</p></div>';}
 function keyCity(key){return key==="a"||key==="ArrowLeft"?"A":"B";}
 let metadata;
 function intro(stimulus){return {type:jsPsychHtmlKeyboardResponse,stimulus:'<div class="gc-intro">'+stimulus+'<p style="text-align:center">Press <b>Space</b> to continue.</p></div>',choices:[" "]};}
@@ -92,7 +92,7 @@ if (SHOW_DV_BEFORE_TRIAL) {
 } else {
  timeline.push(intro('<h2>Response feedback</h2><p>'+feedbackInstructions+'</p>'));
 }
-const blackSquareReminder = '<p style="text-align:center"><b>Before every trial, click the black square in the center of the screen to begin.</b></p>';
+const blackSquareReminder = '<p style="text-align:center">Before every trial, click the black square in the center of the screen to begin.</p>';
 if (!SHORT_TEST) {
  timeline.push(intro('<h2>Practice</h2><p>You will complete '+N_PRACTICE+' practice trials before the main experiment. The practice city pairs are distinct from the main experiment.</p>'));
  timeline.push(intro(blackSquareReminder));
@@ -133,7 +133,7 @@ function startExperiment(){
     a.label.localeCompare(b.label));
   orderedFeatures=shuffle(loaded.features);
   featureIndices=orderedFeatures.map(f=>loaded.features.findIndex(v=>v.id===f.id));
-  POSITION_FEATURE_MAP=orderedFeatures.map((f,i)=>({position:i+1,feature_id:f.id,feature_label:f.label}));
+  POSITION_FEATURE_MAP=orderedFeatures.map((f,i)=>({position_id:i+1,position:i+1,feature_id:f.id,feature_label:f.label}));
   N_TRIALS=SHORT_TEST?1:(DEBUG?Math.max(1,Math.min(loaded.trials.length,Number(params.get("trials") ?? loaded.trials.length)||loaded.trials.length)):loaded.trials.length);
   MAIN_TRIALS=shuffle(loaded.trials).slice(0,N_TRIALS);
   PRACTICE_TRIALS=loaded.practice;
