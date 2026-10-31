@@ -53,6 +53,14 @@ Use `&amp;` between URL query parameters in literal HTML, as shown. Short mode k
 
 The legacy `debug=1&trials=3&practice=2&download=1` pilot options remain available; `short=1` takes precedence over their trial/practice counts.
 
+## Current deployed trial set (trialset5)
+
+The website now uses `trialset5`, selected from 83 German cities with **150 real-city pairs**. Five cue D targets are **5%, 25%, 40%, 55%, 75%**; V targets are **100%, 90%, 75%, 65%, 55%** (Capital, Expo Site, Soccer Team, Rail Line, University). Actual cue rates differ slightly due to integer trial counts.
+
+Selection quotas: **more than 15% conflicting-cue trials** (at least 23 of 150) and **fewer than 30% single-difference trials** (at most 44 of 150). The deployed set contains **54 conflicting-cue trials (36.0%)** and **41 single-difference trials (27.3%)**, with pairwise discrimination correlations within the original [-0.1, 0.5] guardrail.
+
+The D/V table displayed *inside the experiment* is generated directly from these file statistics. **Any D/V percentages entered as static text in Qualtrics must be updated separately before data collection.**
+
 ## Files and updates
 
 The website `index.html` and its relative `plugin/`, `layout_config.js`, `trialset_loader.js`, and `data/experiment_data.js` all live at the repository root. To change trialsets, regenerate `experiment_data.js` with the source repository's `s1_make_trials/make_trials.py`, then overwrite **only** `data/experiment_data.js` here.
