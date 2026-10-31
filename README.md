@@ -35,7 +35,7 @@ Set the three experiment conditions **directly in the iframe URL** (no JavaScrip
 | --- | --- | --- | --- |
 | `feedback` | Show brief choice acknowledgment, no correctness | Show the correct city and revealed cue values | `0` |
 | `table` | Hide the D/V table | Show the fixed D/V table before each trial | `1` |
-| `short` | Full experiment: 5 practice and 150 main trials | Short test: **0 practice and 1 main trial** | `0` |
+| `short` | Full experiment: 3 practice and 150 main trials | Short test: **0 practice and 1 main trial** | `0` |
 | `download` | No automatic JSON download | Attempt automatic JSON download on completion | Not set |
 
 Example: one-trial pilot, with feedback and without the D/V table:
