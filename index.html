@@ -64,6 +64,53 @@ function trialDvHtml(){return '<div class="gc-intro">'+cueTable()+'<p style="tex
 function keyCity(key){return key==="a"||key==="ArrowLeft"?"A":"B";}
 let metadata;
 function intro(stimulus){return {type:jsPsychHtmlKeyboardResponse,stimulus:'<div class="gc-intro">'+stimulus+'<p style="text-align:center">Press <b>Space</b> to continue.</p></div>',choices:[" "]};}
+
+// Request fullscreen directly from the user's Space keydown. This must occur
+// within a user gesture; merely loading the jsPsych fullscreen script does not enter fullscreen.
+class FullscreenSpacePlugin {
+ constructor(jsPsych){this.jsPsych=jsPsych;}
+ trial(display_element){
+  let requesting=false;
+  const message='<div class="gc-intro"><h2>Fullscreen mode</h2>'+
+   '<p>The experiment will now enter fullscreen mode. Please do not exit fullscreen until the experiment is complete.</p>'+
+   '<p style="text-align:center">Press <b>Space</b> to continue.</p>'+
+   '<p id="gc-fullscreen-error" style="color:#a00" aria-live="polite"></p></div>';
+  display_element.innerHTML=message;
+  const errorEl=display_element.querySelector("#gc-fullscreen-error");
+  const onKeyDown=(event)=>{
+   if(event.key!==" " && event.code!=="Space")return;
+   event.preventDefault();
+   if(requesting)return;
+   requesting=true;
+   if(document.fullscreenElement){
+    finish(true);
+    return;
+   }
+   if(typeof document.documentElement.requestFullscreen!=="function"){
+    requesting=false;
+    errorEl.textContent="Fullscreen is unavailable in this browser. Please use a browser that supports fullscreen.";
+    return;
+   }
+   try{
+    Promise.resolve(document.documentElement.requestFullscreen()).then(
+     ()=>finish(true),
+     ()=>{requesting=false;errorEl.textContent="Fullscreen was blocked. Please allow fullscreen for this experiment and press Space to try again.";}
+    );
+   }catch(e){
+    requesting=false;
+    errorEl.textContent="Fullscreen was blocked. Please allow fullscreen for this experiment and press Space to try again.";
+   }
+  };
+  const finish=(entered)=>{
+   document.removeEventListener("keydown",onKeyDown,true);
+   display_element.innerHTML="";
+   this.jsPsych.finishTrial({fullscreen_entered:entered});
+  };
+  document.addEventListener("keydown",onKeyDown,true);
+ }
+}
+FullscreenSpacePlugin.info={name:"fullscreen-space",parameters:{}};
+
 function onePair(source,isPractice,index){
  const fA=getFeatureVector(source.left_cues), fB=getFeatureVector(source.right_cues);
  const correctKey=source.correct_side==="left"?"a":"d";
@@ -80,6 +127,7 @@ function onePair(source,isPractice,index){
 const timeline=[];
 function buildTimeline(){
 timeline.push(intro('<h2>Welcome</h2><p>Choose which city has the larger population.</p><p>Hover over a cell to reveal it; move away to hide it.</p><p>Place one hand on the mouse and the other on the <b>A</b> and <b>D</b> keys.</p><p>Press <b>A</b> for the left city or <b>D</b> for the right city.</p>'));
+timeline.push({type:FullscreenSpacePlugin});
 const feedbackInstructions = SHOW_CORRECT_FEEDBACK
  ? 'After each response, all ten feature values will be revealed and the city with the larger population will be highlighted. Press <b>Space</b> to continue.'
  : 'After each response, you will briefly see which city you chose. You will <b>not</b> be told which city was correct.';
@@ -120,6 +168,10 @@ function completeExperiment(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");a.href=url;a.download="gecity_"+SESSION_ID+".json";a.textContent="Download experiment JSON";a.style.display="block";a.style.padding="18px";document.body.appendChild(a);
   a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
+ }
+ // Return to the normal Qualtrics iframe/page after initiating the data download.
+ if(document.fullscreenElement && typeof document.exitFullscreen==="function"){
+  document.exitFullscreen().catch(err=>console.warn("Could not exit fullscreen:",err));
  }
 }
 function startExperiment(){
