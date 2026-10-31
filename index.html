@@ -138,7 +138,7 @@ function startExperiment(){
   MAIN_TRIALS=shuffle(loaded.trials).slice(0,N_TRIALS);
   PRACTICE_TRIALS=loaded.practice;
   TRIALSET_SOURCE=loaded.source_file;
-  metadata={experiment_version:"js-data-v1",trialset:loaded.trialset_name,trialset_source:TRIALSET_SOURCE,condition:CONDITION,show_dv_before_trial:SHOW_DV_BEFORE_TRIAL,feedback_mode:FEEDBACK_MODE,participant_id:PARTICIPANT_ID,session_id:SESSION_ID,random_seed:SEED,debug:DEBUG,short_test:SHORT_TEST,main_trial_count:N_TRIALS,practice_trial_count:N_PRACTICE,statistics_feature_order:statisticsFeatures.map(f=>f.id),feature_order:orderedFeatures.map(f=>f.id),position_feature_map:POSITION_FEATURE_MAP,feature_statistics:loaded.features,layout_config:LAYOUT_CONFIG};
+  metadata={experiment_version:"js-data-v1",record_schema_version:2,trialset:loaded.trialset_name,trialset_source:TRIALSET_SOURCE,condition:CONDITION,show_dv_before_trial:SHOW_DV_BEFORE_TRIAL,feedback_mode:FEEDBACK_MODE,participant_id:PARTICIPANT_ID,session_id:SESSION_ID,random_seed:SEED,debug:DEBUG,short_test:SHORT_TEST,main_trial_count:N_TRIALS,practice_trial_count:N_PRACTICE,statistics_feature_order:statisticsFeatures.map(f=>f.id),feature_order:orderedFeatures.map(f=>f.id),position_feature_map:POSITION_FEATURE_MAP,feature_statistics:loaded.features,layout_config:LAYOUT_CONFIG};
   jsPsych.data.addProperties(metadata);
   buildTimeline();
   document.body.innerHTML="";
