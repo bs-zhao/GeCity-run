@@ -12,6 +12,9 @@ Use `?download=1` to generate and attempt to download a JSON file on experiment 
 
 ## Embed in Qualtrics
 
+The task title, practice/main trial counts, hover-and-key instructions, and condition-specific note now appear inside the experiment's Welcome screen. **Do not duplicate the “City Population Decision Task” instruction paragraphs on the Qualtrics page.** The Qualtrics Text / Graphic question should contain only the corresponding iframe, and the common File Upload question should remain below it on the same page.
+
+
 Add a **Text / Graphic** question in its own survey block/page, open the question's Rich Content Editor **HTML/source** view and insert:
 
 ```html
