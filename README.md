@@ -20,6 +20,7 @@ Add a **Text / Graphic** question in its own survey block/page, open the questio
   title="German City Decision-Making"
   style="width:100%;height:85vh;min-height:650px;border:0;display:block"
   allow="fullscreen"
+  allowfullscreen
 ></iframe>
 ```
 
@@ -81,3 +82,9 @@ Per choice trial:
 - `task_trial_index` and `task_phase`: stable index within the practice/main phase; the jsPsych-wide `trial_index` can refer to the overall timeline instead.
 
 The Table group's D/V statistics page is always ordered by increasing discrimination and **is not** the randomized visual order of the five decision-screen rows. Do not decode mouse data by the fixed table order.
+
+## Fullscreen behavior
+
+After the Welcome screen, a dedicated instruction page asks participants to press **Space** to enter fullscreen mode. The experiment only proceeds after the browser grants fullscreen access. When the final Space response completes the experiment, the JSON download is initiated and fullscreen exits automatically. Participants can still exit fullscreen using browser controls; the experiment asks them not to do so before completion.
+
+**Qualtrics requirement:** The embedded experiment iframe must explicitly permit fullscreen, e.g., `allow="fullscreen" allowfullscreen`. Without this permission, browsers can block the fullscreen request. Qualtrics Preview should be used to verify fullscreen entry, final exit, and JSON download before collecting data.
