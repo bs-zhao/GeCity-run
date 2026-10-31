@@ -79,7 +79,7 @@ function onePair(source,isPractice,index){
 }
 const timeline=[];
 function buildTimeline(){
-timeline.push(intro('<h2>Welcome</h2><p>You will judge which of two <b>anonymous German cities</b> has the larger population. Each city has five Yes/No features. Hover over a covered cell to reveal its value; the cell is covered again when you leave.</p><p>Use the mouse with your right hand to search for information. Press <b>A</b> (left city) or <b>D</b> (right city) with your left hand when you are ready. You may inspect features in any order. City names are not shown during the decision.</p>'));
+timeline.push(intro('<h2>Welcome</h2><p>Choose which city has the larger population.</p><p>Hover over a cell to reveal it; move away to hide it.</p><p><b>Right hand:</b> mouse. <b>Left hand:</b> <b>A</b> (left city) or <b>D</b> (right city).</p>'));
 timeline.push(intro('<h2>Features</h2><p>Capital: Germany\'s national capital. Expo Site: has hosted an international exhibition. Soccer Team: has a top-league football club. Rail Line: has an intercity rail connection. University: has a university.</p><p>The same five features stay in the same positions for your entire session.</p>'));
 const feedbackInstructions = SHOW_CORRECT_FEEDBACK
  ? 'After each response, all ten feature values will be revealed and the city with the larger population will be highlighted. Press <b>Space</b> to continue.'
