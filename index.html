@@ -15,6 +15,7 @@
 <script src="./plugin/click_rec.js"></script>
 <script src="./plugin/city_search.js"></script>
 <script src="./plugin/city_feedback.js"></script>
+<script src="./plugin/break_screen.js"></script>
 <style>
 html,body{background:#fff;color:#222;min-height:100%;font-family:Arial,sans-serif}
 html:fullscreen,body:fullscreen,html:-webkit-full-screen,body:-webkit-full-screen{background:#fff;color:#222}
@@ -151,6 +152,13 @@ const taskInstructions =
       ? '<p>You will receive feedback after each decision.</p>'
       : '');
 timeline.push(intro(taskInstructions));
+timeline.push(intro(
+ '<h2>Important: Please Stay Focused</h2>'+
+ '<p>This study analyzes <b>how long you take to make each decision</b>, as well as which information you choose to inspect.</p>'+
+ '<p>Please remain focused on the experiment. Do not use your phone, switch to other tasks, or engage in unrelated activities during the decision trials.</p>'+
+ '<p>Scheduled breaks are available after one-third and two-thirds of the main experiment. Please use these breaks for other activities.</p>'+
+ '<p>Make accurate decisions at your natural pace.</p>'
+));
 timeline.push({type:FullscreenSpacePlugin});
 const feedbackInstructions = SHOW_CORRECT_FEEDBACK
  ? 'After each response, all ten feature values will be revealed and the city with the larger population will be highlighted. Press <b>Space</b> to continue.'
@@ -174,7 +182,26 @@ timeline.push(intro(SHORT_TEST
  ? '<h2>Short test</h2><p>This test contains just one decision trial, with no practice trials.</p>'
  : '<h2>Main experiment</h2><p>Practice complete. The main experiment contains '+N_TRIALS+' trials. Please respond as carefully as you can.</p>'));
 if (SHORT_TEST) timeline.push(intro(blackSquareReminder));
-MAIN_TRIALS.forEach((t,i)=>timeline.push(onePair(t,false,i)));
+// For the full experiment: breaks after trials 50 and 100 (not practice).
+// Debug sessions of at least three trials use proportional break positions.
+const breakAfter=N_TRIALS>=3
+ ? [Math.floor(N_TRIALS/3),Math.floor(2*N_TRIALS/3)]
+ : [];
+MAIN_TRIALS.forEach((t,i)=>{
+ timeline.push(onePair(t,false,i));
+ const completed=i+1;
+ const breakIndex=breakAfter.indexOf(completed);
+ if(!SHORT_TEST && breakIndex!==-1){
+  timeline.push({
+   type:gecitybreak,
+   break_number:breakIndex+1,
+   completed_main_trials:completed,
+   total_main_trials:N_TRIALS,
+   data:{phase:"break",is_practice:false,break_number:breakIndex+1,
+         completed_main_trials:completed,total_main_trials:N_TRIALS}
+  });
+ }
+});
 timeline.push({
  type:jsPsychHtmlKeyboardResponse,
  stimulus:'<div class="gc-intro"><h2>Experiment complete</h2>'+
@@ -221,7 +248,7 @@ function startExperiment(){
   MAIN_TRIALS=shuffle(loaded.trials).slice(0,N_TRIALS);
   PRACTICE_TRIALS=loaded.practice;
   TRIALSET_SOURCE=loaded.source_file;
-  metadata={experiment_version:"js-data-v1",record_schema_version:2,trialset:loaded.trialset_name,trialset_source:TRIALSET_SOURCE,condition:CONDITION,show_dv_before_trial:SHOW_DV_BEFORE_TRIAL,feedback_mode:FEEDBACK_MODE,participant_id:PARTICIPANT_ID,session_id:SESSION_ID,random_seed:SEED,debug:DEBUG,short_test:SHORT_TEST,main_trial_count:N_TRIALS,practice_trial_count:N_PRACTICE,statistics_feature_order:statisticsFeatures.map(f=>f.id),feature_order:orderedFeatures.map(f=>f.id),position_feature_map:POSITION_FEATURE_MAP,feature_statistics:loaded.features,layout_config:LAYOUT_CONFIG};
+  metadata={experiment_version:"js-data-v1",record_schema_version:2,trialset:loaded.trialset_name,trialset_source:TRIALSET_SOURCE,condition:CONDITION,show_dv_before_trial:SHOW_DV_BEFORE_TRIAL,feedback_mode:FEEDBACK_MODE,participant_id:PARTICIPANT_ID,session_id:SESSION_ID,random_seed:SEED,debug:DEBUG,short_test:SHORT_TEST,main_trial_count:N_TRIALS,practice_trial_count:N_PRACTICE,scheduled_break_after_trials:N_TRIALS>=3?[Math.floor(N_TRIALS/3),Math.floor(2*N_TRIALS/3)]:[],statistics_feature_order:statisticsFeatures.map(f=>f.id),feature_order:orderedFeatures.map(f=>f.id),position_feature_map:POSITION_FEATURE_MAP,feature_statistics:loaded.features,layout_config:LAYOUT_CONFIG};
   jsPsych.data.addProperties(metadata);
   buildTimeline();
   document.body.innerHTML="";
