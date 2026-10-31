@@ -54,7 +54,7 @@ const SHORT_TEST = booleanParam("short", false);
 const FEEDBACK_MODE = SHOW_CORRECT_FEEDBACK ? "correct" : "choice";
 const CONDITION = (SHOW_DV_BEFORE_TRIAL ? "dv_" : "no_dv_") + FEEDBACK_MODE;
 const DEBUG = params.get("debug")==="1";
-const N_PRACTICE = SHORT_TEST ? 0 : (DEBUG ? Math.max(0,Math.min(5,Number(params.get("practice") ?? 5)||0)) : 5);
+const N_PRACTICE = SHORT_TEST ? 0 : (DEBUG ? Math.max(0,Math.min(5,Number(params.get("practice") ?? 3)||0)) : 3);
 let N_TRIALS = 0;
 const PARTICIPANT_ID = params.get("participant") || params.get("PROLIFIC_PID") || "anonymous";
 const SESSION_ID = "gc-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,10);
