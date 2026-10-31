@@ -86,9 +86,14 @@ var citysearch = (function (jspsych) {
             const arr_time = [];
             const eventTimeline = [];
             const trialStart = performance.now();
+            const trialStartedAtUtc = new Date().toISOString();
             let t0 = trialStart;
-            let currentEnterAt = null;
             let lastViewedCell = 0;
+            let currentReveal = null;
+            let currentElement = null;
+            let responseAtMs = null;
+            let responseAtUtc = null;
+            const mouseReveals = [];
 
             const viewCounts = {};
             const dwellTimes = {};
@@ -105,12 +110,54 @@ var citysearch = (function (jspsych) {
                 return citySide === "A" ? featIdx + 1 : featIdx + 6;
             }
 
-            function pushEvent(code) {
+            function cellDetails(code) {
+                const featureIndex = (code - 1) % N;
+                const city = code <= N ? "A" : "B";
+                const value = city === "A" ? trial.features_a[featureIndex] : trial.features_b[featureIndex];
+                return {
+                    city: city,
+                    feature_position: featureIndex + 1,
+                    feature_id: trial.feature_ids[featureIndex],
+                    feature_label: trial.feature_labels[featureIndex],
+                    value: value,
+                    value_label: value === 1 ? "Yes" : "No",
+                };
+            }
+
+            function pushEvent(code, event, now, extras = {}) {
                 arr_fix.push(code);
-                const t1 = performance.now();
-                arr_time.push(t1 - t0);
-                eventTimeline.push({cell: code, time_ms: t1-trialStart});
-                t0 = t1;
+                arr_time.push(now - t0);
+                eventTimeline.push({ cell: code, time_ms: now - trialStart, event: event, ...extras });
+                t0 = now;
+            }
+
+            // Every reveal is saved with city, feature, value, onset, offset and duration.
+            // Closing at the response key fixes the prior dwell-time undercount/overcount.
+            function closeCurrentReveal(now, reason) {
+                if (currentReveal === null) return;
+                const cell = currentReveal.cell;
+                const duration = Math.max(0, now - currentReveal.started_at_perf_ms);
+                const completed = {
+                    order: currentReveal.order,
+                    cell: cell,
+                    city: currentReveal.city,
+                    feature_position: currentReveal.feature_position,
+                    feature_id: currentReveal.feature_id,
+                    feature_label: currentReveal.feature_label,
+                    value: currentReveal.value,
+                    value_label: currentReveal.value_label,
+                    start_ms: currentReveal.start_ms,
+                    end_ms: now - trialStart,
+                    duration_ms: duration,
+                    end_reason: reason,
+                };
+                mouseReveals.push(completed);
+                dwellTimes[cell] += duration;
+                if (currentElement !== null) currentElement.textContent = "?";
+                pushEvent(0, "exit", now, { from_cell: cell, reason: reason });
+                currentCell = 0;
+                currentReveal = null;
+                currentElement = null;
             }
 
             function keyToCity(key) {
@@ -179,26 +226,29 @@ var citysearch = (function (jspsych) {
             display_element.innerHTML = html;
 
             function onEnter(el, code, value) {
-                if (currentCell !== 0 && currentCell !== code) {
-                    pushEvent(0);
-                }
+                if (response.key !== null || currentCell === code) return;
+                const now = performance.now();
+                if (currentReveal !== null) closeCurrentReveal(now, "switch");
+                const detail = cellDetails(code);
                 currentCell = code;
-                currentEnterAt = performance.now();
+                currentElement = el;
+                currentReveal = {
+                    order: mouseReveals.length + 1,
+                    cell: code,
+                    ...detail,
+                    started_at_perf_ms: now,
+                    start_ms: now - trialStart,
+                };
                 lastViewedCell = code;
                 el.textContent = value === 1 ? "Yes" : "No";
                 if (firstCell === null) firstCell = code;
                 viewCounts[code]++;
-                pushEvent(code);
+                pushEvent(code, "enter", now, detail);
             }
 
-            function onLeave(el) {
-                if (currentCell !== 0) {
-                    dwellTimes[currentCell] += Math.max(0, performance.now() - currentEnterAt);
-                }
+            function onLeave(el, code) {
+                if (currentCell === code) closeCurrentReveal(performance.now(), "mouse_leave");
                 el.textContent = "?";
-                pushEvent(0);
-                currentCell = 0;
-                currentEnterAt = null;
             }
 
             cells.forEach(({ idA, idB, fi }) => {
@@ -210,9 +260,9 @@ var citysearch = (function (jspsych) {
                 const valB = trial.features_b[fi];
 
                 elA.addEventListener("mouseenter", () => onEnter(elA, codeA, valA));
-                elA.addEventListener("mouseleave", () => onLeave(elA));
+                elA.addEventListener("mouseleave", () => onLeave(elA, codeA));
                 elB.addEventListener("mouseenter", () => onEnter(elB, codeB, valB));
-                elB.addEventListener("mouseleave", () => onLeave(elB));
+                elB.addEventListener("mouseleave", () => onLeave(elB, codeB));
             });
 
             const keyboardListener = this.jsPsych.pluginAPI.getKeyboardResponse({
@@ -227,22 +277,24 @@ var citysearch = (function (jspsych) {
 
             function after_response(info) {
                 if (response.key !== null) return;
+                const now = performance.now();
                 response = info;
+                responseAtMs = now - trialStart;
+                responseAtUtc = new Date().toISOString();
 
-                if (currentCell !== 0) {
-                    const lastDur = arr_time.length ? arr_time[arr_time.length - 1] : 0;
-                    dwellTimes[currentCell] += lastDur;
-                    lastCellBeforeResponse = currentCell;
-                    pushEvent(0);
-                    currentCell = 0;
-                    currentEnterAt = null;
-                } else {
-                    lastCellBeforeResponse = lastViewedCell;
-                }
+                lastCellBeforeResponse = currentCell !== 0 ? currentCell : lastViewedCell;
+                if (currentReveal !== null) closeCurrentReveal(now, "response");
 
-                const t1 = performance.now();
-                arr_time.push(t1 - t0);
-                eventTimeline.push({cell: 0, time_ms: t1-trialStart, event: "response"});
+                // Keep the original transition arrays; response is the final event.
+                arr_time.push(now - t0);
+                eventTimeline.push({
+                    cell: 0,
+                    time_ms: responseAtMs,
+                    event: "response",
+                    key: info.key,
+                    choice_city: keyToCity(info.key),
+                    rt_ms: info.rt,
+                });
 
                 const choiceCity = keyToCity(info.key);
                 const correctCity = trial.correct_key === "a" ? "A" : "B";
@@ -275,7 +327,14 @@ var citysearch = (function (jspsych) {
 
                 const trial_data = {
                     rt: response.rt,
+                    decision_rt_ms: responseAtMs,
                     response: response.key,
+                    trial_started_at_utc: trialStartedAtUtc,
+                    response_at_utc: responseAtUtc,
+                    trial_finished_at_utc: new Date().toISOString(),
+                    trial_duration_ms: performance.now() - trialStart,
+                    task_trial_index: trial.trial_index,
+                    task_phase: trial.is_practice ? "practice" : "main",
                     correct: correct,
                     correct_key: trial.correct_key,
                     choice_city: choiceCity,
@@ -283,8 +342,16 @@ var citysearch = (function (jspsych) {
                     arr_fix: arr_fix,
                     arr_time: arr_time,
                     event_timeline: eventTimeline,
+                    mouse_reveals: mouseReveals,
                     view_counts: viewCounts,
                     dwell_times: dwellTimes,
+                    view_summary: Array.from({ length: N * 2 }, (_, index) => {
+                        const cell = index + 1;
+                        return { cell: cell, ...cellDetails(cell),
+                            view_count: viewCounts[cell], total_dwell_ms: dwellTimes[cell] };
+                    }),
+                    total_search_dwell_ms: mouseReveals.reduce((sum, item) => sum + item.duration_ms, 0),
+                    time_to_first_reveal_ms: mouseReveals.length ? mouseReveals[0].start_ms : null,
                     first_cell: firstCell,
                     first_side: firstSide,
                     first_feature_idx: firstFeatureIdx,
