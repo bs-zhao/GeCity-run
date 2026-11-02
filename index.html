@@ -26,16 +26,6 @@ html:fullscreen,body:fullscreen,html:-webkit-full-screen,body:-webkit-full-scree
 .gc-intro table{border-collapse:collapse;margin:16px auto}
 .gc-intro th,.gc-intro td{border:1px solid #bbb;padding:8px 15px}
 .gc-intro th{background:#eee}
-.gc-upload-warning{max-width:760px;margin:0 auto;text-align:left;line-height:1.6;font-size:18px}
-.gc-upload-warning h2{text-align:center;font-size:29px;margin-bottom:20px}
-.gc-upload-warning .gc-upload-alert{border:3px solid #ba1b1b;background:#fff2f2;color:#920e0e;padding:15px 18px;text-align:center;font-size:21px;font-weight:bold;margin:18px 0}
-.gc-upload-warning ol{padding-left:30px}
-.gc-upload-warning li{padding:5px 0;margin-bottom:13px}
-.gc-upload-warning .gc-upload-next{font-size:19px;text-align:center;font-weight:bold;margin-top:24px}
-.gc-upload-warning code{font-size:0.88em;word-break:break-all}
-.gc-upload-reminder{max-width:760px;margin:32px auto;padding:18px 22px;text-align:left;font:18px/1.6 Arial,sans-serif;color:#222}
-.gc-upload-reminder h2{font-size:27px;text-align:center}
-.gc-upload-reminder a{color:#064bb4;font-weight:bold;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -212,23 +202,20 @@ MAIN_TRIALS.forEach((t,i)=>{
   });
  }
 });
-const requiresFileUpload=DEBUG || params.get("download")==="1";
 timeline.push({
  type:jsPsychHtmlKeyboardResponse,
- stimulus:requiresFileUpload
-  ? '<div class="gc-upload-warning">'+
-    '<h2>Decision Task Complete — Upload Still Required!</h2>'+
-    '<div class="gc-upload-alert">IMPORTANT: Your study data have NOT been submitted yet.</div>'+
-    '<ol>'+
-     '<li>Press <b>Space</b> to exit fullscreen. Your data file (<code>gecity_*.json</code>) will download automatically.</li>'+
-     '<li>Return to the <b>Qualtrics survey</b> and <b>upload the downloaded JSON file</b> in the File Upload question below the experiment.</li>'+
-     '<li>Click <b>Next</b> to submit your survey response.</li>'+
-    '</ol>'+
-    '<p class="gc-upload-next">DO NOT close this page before uploading your file.</p>'+
-    '<p style="text-align:center">Press <b>Space</b> to exit fullscreen and proceed to data upload.</p>'+
-    '</div>'
-  : '<div class="gc-intro"><h2>Decision Task Complete</h2>'+
-    '<p>Press <b>Space</b> to exit fullscreen and return to the survey.</p></div>',
+ stimulus:'<div class="gc-intro" style="max-width:780px;">'+
+  '<h2 style="font-size:28px;text-align:center;">Decision Task Complete — Data Upload Required</h2>'+
+  '<div style="border:3px solid #b91c1c;background:#fff2f2;color:#991b1b;padding:16px 18px;margin:20px 0;text-align:center;font-size:21px;font-weight:bold;">'+
+  'IMPORTANT: Your data have NOT been submitted yet!</div>'+
+  '<p><b>Step 1:</b> Press <b>Space</b> to exit fullscreen.'+
+   ((DEBUG || params.get("download")==="1") ? ' Your data file (<b>gecity_*.json</b>) will download automatically.' : '')+
+  '</p>'+
+  '<p><b>Step 2:</b> Return to the Qualtrics survey and <b>UPLOAD the downloaded JSON file</b> in the File Upload question.</p>'+
+  '<p><b>Step 3:</b> Click <b>Next</b> to submit your survey response.</p>'+
+  '<p style="color:#991b1b;font-size:20px;font-weight:bold;text-align:center;margin:24px 0;">DO NOT CLOSE THIS PAGE BEFORE UPLOADING YOUR FILE.</p>'+
+  '<p style="text-align:center;">Press <b>Space</b> to exit fullscreen and proceed to data upload.</p>'+
+  '</div>',
  choices:[" "]
 });
 }
@@ -242,40 +229,13 @@ function completeExperiment(){
  // Restrict parent messages to an explicitly configured origin.
  const parentOrigin=params.get("parent_origin");
  if(window.parent!==window && parentOrigin){window.parent.postMessage({type:"GECITY_COMPLETE",payload},parentOrigin);}
-
- // Keep a persistent upload reminder visible INSIDE the iframe after fullscreen exits.
- // The automatic download is not a Qualtrics upload: participants must still submit it.
- const requiresFileUpload=DEBUG || params.get("download")==="1";
- let manualDownloadLink=null;
- if(requiresFileUpload){
+ if(DEBUG || params.get("download")==="1"){
   const blob=new Blob([encoded],{type:"application/json"});
   const url=URL.createObjectURL(blob);
-  manualDownloadLink=document.createElement("a");
-  manualDownloadLink.href=url;
-  manualDownloadLink.download="gecity_"+SESSION_ID+".json";
-  manualDownloadLink.textContent="Download the data file again";
-  window.addEventListener("pagehide",()=>URL.revokeObjectURL(url),{once:true});
+  const a=document.createElement("a");a.href=url;a.download="gecity_"+SESSION_ID+".json";a.textContent="Download experiment JSON";a.style.display="block";a.style.padding="18px";document.body.appendChild(a);
+  a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
  }
- const display=document.getElementById("jspsych-content") || document.body;
- if(requiresFileUpload){
-  display.innerHTML=
-   '<div class="gc-upload-reminder">'+
-    '<h2>Almost Done — Upload Your Data File!</h2>'+
-    '<div class="gc-upload-alert" style="border:3px solid #ba1b1b;background:#fff2f2;color:#920e0e;padding:14px;text-align:center;font-weight:bold;">Your data have NOT been submitted.</div>'+
-    '<p><b>1.</b> Find the downloaded <code>gecity_*.json</code> file (usually in Downloads).</p>'+
-    '<p><b>2.</b> Scroll to the <b>File Upload</b> question on the Qualtrics survey page and upload it.</p>'+
-    '<p><b>3.</b> Click <b>Next</b> to submit your survey response.</p>'+
-    '<p style="font-weight:bold;">Please do not close this tab until your upload is complete.</p>'+
-    '<p id="gc-download-again"></p>'+
-   '</div>';
-  display.querySelector("#gc-download-again").appendChild(manualDownloadLink);
-  // Initiate download after building the reminder; the same link remains
-  // clickable if the browser blocks or hides the automatic download.
-  manualDownloadLink.click();
- }else{
-  display.innerHTML='<div class="gc-upload-reminder"><h2>Decision Task Complete</h2><p>Return to the survey page to continue.</p></div>';
- }
- // Exit fullscreen; participants then see the file-upload question in Qualtrics.
+ // Return to the normal Qualtrics iframe/page after initiating the data download.
  if(document.fullscreenElement && typeof document.exitFullscreen==="function"){
   document.exitFullscreen().catch(err=>console.warn("Could not exit fullscreen:",err));
  }
