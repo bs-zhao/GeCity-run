@@ -1,5 +1,44 @@
 # GeCity-run
 
+## Experimental pilot branch: D/V intensity dots (not the production main branch)
+
+This branch adds **two visual indicators under each cue label** on the city decision screen,
+for the **Table condition only** (`table=1`). A **blue D dot** depicts discrimination,
+and a **green V dot** depicts validity. Five shades are assigned by **relative rank
+across the five attributes**, from 1 (lightest) to 5 (darkest). The D/V
+percentages shown before each trial are unchanged; this is a visual pilot,
+**not a replacement for numeric D/V values**.
+
+| Feature | D target | Blue D level | V target | Green V level |
+| --- | ---: | ---: | ---: | ---: |
+| Capital | 5% | 1 (lightest) | 100% | 5 (darkest) |
+| Expo Site | 29% | 2 | 88% | 4 |
+| Soccer Team | 41% | 3 | 77% | 3 |
+| Rail Line | 52% | 4 | 66% | 2 |
+| University | 62% | 5 (darkest) | 55% | 1 (lightest) |
+
+The five positions on the decision display are randomized once per participant.
+Dots follow the feature **identity**, not a particular screen row, and remain
+constant through practice and all main trials. A legend explains the colors,
+and the intro text describes the five relative intensity levels. The dots
+are outside the covered Yes/No cells and do not change hover capture or
+response behavior.
+
+The Feedback condition (`table=0&feedback=1`) has **no dots** and remains
+visually unchanged. The exported metadata adds `dv_dot_pilot`,
+`dv_dot_discrimination_levels` and `dv_dot_validity_levels` to identify
+these pilot responses separately from main-branch data.
+
+**Testing locally:** check out `pilot/dv-color-dots`, run a local HTTP
+server at the repository root (for example, `python -m http.server 8000`),
+then open `http://localhost:8000/?table=1&feedback=0&short=1&download=1`.
+Use `table=0&feedback=1&short=1` to confirm that dots are absent.
+This branch is not automatically deployed to the existing GitHub Pages URL;
+the production Pages site keeps using `main`.
+
+---
+
+
 This is a **deployment-only** copy of the German City Decision-Making experiment from the private research repository `Cognition-Decision-Modeling-Lab/GeCity-exp`, directory `s3_exp_program/exp_run/v1/`. It is intended for GitHub Pages and for embedding in Qualtrics as an iframe.
 
 ## Publish on GitHub Pages
