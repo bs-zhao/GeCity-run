@@ -53,26 +53,6 @@ Use `&amp;` between URL query parameters in literal HTML, as shown. Short mode k
 
 The legacy `debug=1&trials=3&practice=2&download=1` pilot options remain available; `short=1` takes precedence over their trial/practice counts.
 
-### Required data upload at the end
-
-The final fullscreen page no longer simply says "Experiment complete".
-It prominently warns that **data have not yet been submitted** and gives
-three steps: **press Space to exit fullscreen and download the JSON**,
-**upload the downloaded `gecity_*.json` in the Qualtrics File Upload question
-below the iframe**, and **click Next to submit**. Participants are explicitly
-told **not to close the survey tab before uploading**.
-
-After fullscreen exits, a persistent reminder remains visible in the iframe.
-It includes a manual **Download the data file again** link for browsers that
-block or conceal the automatic download. Automatic download still requires
-`download=1` (or `debug=1`).
-
-**Important Qualtrics setup:** Set the File Upload question to **Force
-Response** so a respondent cannot advance without attaching the JSON. The
-iframe cannot itself guarantee that a file is uploaded into Qualtrics; the
-upload is a separate survey action. Confirm actual file attachment and
-submission in a Qualtrics Preview run before launching.
-
 ### Focus instructions and simple breaks
 
 After the Welcome screen, a separate **Please Stay Focused** page reminds
