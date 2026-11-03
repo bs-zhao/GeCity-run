@@ -37,7 +37,7 @@ var citysearch = (function (jspsych) {
             },
             choices: {
                 type: jspsych.ParameterType.KEYS,
-                default: ["a", "d", "ArrowLeft", "ArrowRight"],
+                default: ["a", "b", "d", "ArrowLeft", "ArrowRight"],
             },
             is_practice: {
                 type: jspsych.ParameterType.BOOL,
@@ -175,8 +175,9 @@ var citysearch = (function (jspsych) {
             }
 
             function keyToCity(key) {
-                if (key === "a" || key === "ArrowLeft") return "A";
-                if (key === "d" || key === "ArrowRight") return "B";
+                const normalized = String(key ?? "").toLowerCase();
+                if (normalized === "a" || normalized === "arrowleft") return "A";
+                if (normalized === "b" || normalized === "d" || normalized === "arrowright") return "B";
                 return null;
             }
 
